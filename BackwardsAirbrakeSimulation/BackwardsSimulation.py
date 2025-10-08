@@ -2,7 +2,7 @@
 #from pyatmos import expo
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
+#import pandas as pd
 import csv
 import math as Math
 import time
@@ -12,7 +12,7 @@ def BestDeployLevel(angle, altitude, velocity, maxAlt, step):
     for level in range (11):
         alt = []
         vel = []
-        with open(f"Angle{angle}Level{level*10}%.csv", 'r') as sourceFile:
+        with open(f"BackwardsAirbrakeSimulation\SourceFiles/Angle{angle}Level{level*10}%.csv", 'r') as sourceFile:
             reader = csv.reader(sourceFile)
             currentRow = next(reader)
             minAlt = float(currentRow[0])
@@ -136,28 +136,28 @@ for i in range (6):
         ax[k,l].set_xlabel("Velocity [m/s]")
         ax[k,l].set_ylabel("Altitude [m]")
 
-        with open(f"Angle{90 - angle}Level{j*10}%.csv", 'w') as file:
+        with open(f"BackwardsAirbrakeSimulation\SourceFiles\Angle{90 - angle}Level{j*10}%.csv", 'w') as file:
             writer = csv.writer(file)
             for v, a in zip(altitudes, velocities):
                 writer.writerow([v, a])
 
         
 fig.tight_layout(h_pad=3, w_pad=5)
-plt.savefig('SimResults.png')
+plt.savefig('BackwardsAirbrakeSimulation\SimResults.png')
 #plt.show()
 
-numVel = 50
-numAlt = 50
+numVel = 20
+numAlt = 20
 numAng = 6
 minVelocity = .5
 maxVelocity = 275
 velStep = (maxVelocity-minVelocity)/(numAng-1)
 maxAltitude = 3048
-with open("LookupTable.csv", 'w') as ResultFile:
+with open("BackwardsAirbrakeSimulation\LookupTable.csv", 'w') as ResultFile:
     writer = csv.writer(ResultFile)
     for ang in range (numAng):
         minAltitude = 0
-        with open(f"Angle{ang*5}Level0%.csv",'r') as file:
+        with open(f"BackwardsAirbrakeSimulation\SourceFiles/Angle{ang*5}Level0%.csv",'r') as file:
             reader = csv.reader(file)
             minAltitude = float(next(reader)[0])
         altStep = (maxAltitude-minAltitude)/(numAlt-1)
