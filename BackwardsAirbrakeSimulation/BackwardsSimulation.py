@@ -52,7 +52,6 @@ def BestDeployLevel(angle, altitude, velocity, maxAlt, step):
     print(f"Best deployment level at altitude: {altitude} and velocity: {velocity} is {index*10}%")
     return index*10
 
-startTime = time.time()
 targetAltitude = 3048 #Target altitude in m
 step = .1
 maxSpeed = 275 #Deployment limiter of airbrakes based on rocket speed
@@ -146,8 +145,9 @@ fig.tight_layout(h_pad=3, w_pad=5)
 plt.savefig('BackwardsAirbrakeSimulation\SimResults.png')
 #plt.show()
 
-numVel = 5
-numAlt = 5
+startTime = time.time()
+numVel = 20
+numAlt = 20
 numAng = 6
 progressCounter = 0
 minVelocity = .5
@@ -172,7 +172,12 @@ with open("BackwardsAirbrakeSimulation\LookupTable.csv", 'w') as ResultFile:
                 row.append(deployLevel)
             writer.writerow(row)
             with open("BackwardsAirbrakeSimulation\progress.txt", 'w') as progress:
-                progress.write(f"{progressCounter*100/(numVel*numAng*numAlt)}%")
+                progressPercentage = progressCounter*100/(numVel*numAng*numAlt)
+                currentTime = time.time()
+                currentRuntime = (currentTime - startTime)
+                estimatedRuntime = 100*currentRuntime/progressPercentage
+                progress.write(f"Current Progress: {progressPercentage:.4f}%")
+                progress.write(f"\nCurrent Runtime: {currentRuntime:.4f}\nEstimated Runtime: {estimatedRuntime:.4f}")
 
 
 endTime = time.time()
