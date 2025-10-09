@@ -146,9 +146,10 @@ fig.tight_layout(h_pad=3, w_pad=5)
 plt.savefig('BackwardsAirbrakeSimulation\SimResults.png')
 #plt.show()
 
-numVel = 20
-numAlt = 20
+numVel = 5
+numAlt = 5
 numAng = 6
+progressCounter = 0
 minVelocity = .5
 maxVelocity = 275
 velStep = (maxVelocity-minVelocity)/(numAng-1)
@@ -167,8 +168,12 @@ with open("BackwardsAirbrakeSimulation\LookupTable.csv", 'w') as ResultFile:
             for alt in range (numAlt):
                 currentAltitude = round(maxAltitude - altStep*alt, 1)
                 deployLevel = BestDeployLevel(ang*5, currentAltitude, currentVelocity, maxAltitude, step)
+                progressCounter += 1
                 row.append(deployLevel)
             writer.writerow(row)
+            with open("BackwardsAirbrakeSimulation\progress.txt", 'w') as progress:
+                progress.write(f"{progressCounter*100/(numVel*numAng*numAlt)}%")
+
 
 endTime = time.time()
 execution_time = endTime - startTime
