@@ -1,7 +1,7 @@
 #Backwards Simulation
 #from pyatmos import expo
 import matplotlib.pyplot as plt
-import numpy as np
+#import numpy as np
 #import pandas as pd
 import csv
 import math as Math
@@ -31,8 +31,8 @@ def BestDeployLevel(angle, altitude, velocity, maxAlt, step):
         i = 0
         j = round(numIndex, 1)
         k = int((j-i)/2)
-        """if altitude < alt[i]:
-            j = -1"""
+        if altitude < alt[i]:
+            j = -1
         while i <= j and alt[k] != altitude:
             #print(f"{alt[k]} {altitude}")
             if alt[k] < altitude:
@@ -167,7 +167,12 @@ with open("BackwardsAirbrakeSimulation\LookupTable.csv", 'w') as ResultFile:
             row = []
             for alt in range (numAlt):
                 currentAltitude = round(maxAltitude - altStep*alt, 1)
-                deployLevel = BestDeployLevel(ang*5, currentAltitude, currentVelocity, maxAltitude, step)
+                if (currentAltitude == 3048):
+                    deployLevel = 100
+                elif (currentAltitude >= minAltitude):
+                    deployLevel = BestDeployLevel(ang*5, currentAltitude, currentVelocity, maxAltitude, step)
+                else:
+                    deployLevel = 0
                 progressCounter += 1
                 row.append(deployLevel)
             writer.writerow(row)
