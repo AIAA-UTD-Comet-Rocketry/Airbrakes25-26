@@ -206,19 +206,16 @@ if __name__ == "__main__":
             returnedValue = result.result()
             print(f"Angle {returnedValue}, csv file should be done")
 
-endTime = time.time()
-execution_time = endTime - startTime
-print(f"Runtime: {execution_time:.4f}")
+    endTime = time.time()
+    execution_time = endTime - startTime
+    finalDf = pd.DataFrame()
 
-finalDf = pd.DataFrame()
-
-with open("BackwardsAirbrakeSimulation\LookupTable.csv", "w") as tableFile:
-    for i in range(numAng):
-        angleDf = pd.read_csv(f"BackwardsAirbrakeSimulation\Angle{i}.csv")
-        finalDf = pd.concat([finalDf, angleDf], ignore_index=True)
-
-finalDf.to_csv("LookupTable.csv")
-        
+    print(f"Runtime: {execution_time:.4f}")
+    for i in range(0, 5, 1):
+        df = pd.read_csv(f"BackwardsAirbrakeSimulation\Angle{i}.csv", header=None)
+        finalDf = pd.concat([finalDf, df], ignore_index = True)
+            
+    finalDf.to_csv("BackwardsAirbrakeSimulation\LookupTable.csv",header=None, index=False)
 '''
 # 1-Dimensional Physics
 targetAltitude = 3048 #Target altitude in m
