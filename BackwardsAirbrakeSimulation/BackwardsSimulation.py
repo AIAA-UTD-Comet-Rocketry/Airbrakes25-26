@@ -22,7 +22,6 @@ def BestDeployLevel(angle, altitude, velocity, maxAlt, step):
             while done == False and float(currentRow[0]) <= 3048:
                 alt.append(float(currentRow[0]))
                 vel.append(float(currentRow[1]))
-                currentRow = next(reader)
                 while done == False and currentRow == []:
                     try:
                         currentRow = next(reader)
@@ -151,13 +150,14 @@ plt.savefig('BackwardsAirbrakeSimulation\SimResults.png')
 
 startTime = time.time()
 processors = 60
-numVel = 20
-numAlt = 20
+numVel = 2
+numAlt = 2
 numAng = 6
 if (processors > numVel):
     maxProcesses = numVel
 else:
     maxProcesses = processors
+    leftOver = numVel % processors
 progressCounter = 0
 minVelocity = .5
 maxVelocity = 275
@@ -183,7 +183,6 @@ def getCSVForVelocity(vel):
                     deployLevel = BestDeployLevel(ang*5, currentAltitude, currentVelocity, maxAltitude, step)
                 else:
                     deployLevel = 0
-
                 row.append(deployLevel)
             writer.writerow(row)
             with open("BackwardsAirbrakeSimulation\progress.txt", 'w') as progress:
@@ -200,7 +199,16 @@ def getCSVForVelocity(vel):
 if __name__ == "__main__":
     with ProcessPoolExecutor(max_workers = maxProcesses) as executor:
         results = []
-        for i in range(0, numVel, 1):
+        for i in range(0, maxProcesses, 1):
+            processCall = executor.submit(getCSVForVelocity, i)
+            results.append(processCall)
+        for result in as_completed(results):
+            returnedValue = result.result()
+            print(f"Velocity {returnedValue}, csv file should be done")
+
+    with ProcessPoolExecutor(max_workers = leftOver) as executor:
+        results = []
+        for i in range(maxProcesses, numVel, 1):
             processCall = executor.submit(getCSVForVelocity, i)
             results.append(processCall)
         for result in as_completed(results):
