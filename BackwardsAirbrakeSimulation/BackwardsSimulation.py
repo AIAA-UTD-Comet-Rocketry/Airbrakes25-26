@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 #import pandas as pd
 import csv
 import math as Math
+from concurrent.futures import ProcessPoolExecutor
 import time
 #2-Dimensional Physics
 def BestDeployLevel(angle, altitude, velocity, maxAlt, step):
@@ -75,7 +76,7 @@ fig, ax = plt.subplots(2, 3, figsize=(12, 8))
 lines = []
 plt.suptitle(f"Rocket Paths Given Varying Airbrake Deployment Levels")
 
-for i in range (6):
+def doForAngle(i):
     angle = 90 - i*5
     for j in range (11):
         altitude = targetAltitude #Changing altitude
@@ -140,6 +141,7 @@ for i in range (6):
             for v, a in zip(altitudes, velocities):
                 writer.writerow([v, a])
 
+# START FROM HERE
         
 fig.tight_layout(h_pad=3, w_pad=5)
 plt.savefig('BackwardsAirbrakeSimulation\SimResults.png')
@@ -154,6 +156,7 @@ minVelocity = .5
 maxVelocity = 275
 velStep = (maxVelocity-minVelocity)/(numAng-1)
 maxAltitude = 3048
+
 with open("BackwardsAirbrakeSimulation\LookupTable.csv", 'w') as ResultFile:
     writer = csv.writer(ResultFile)
     for ang in range (numAng):
@@ -174,6 +177,12 @@ with open("BackwardsAirbrakeSimulation\LookupTable.csv", 'w') as ResultFile:
                 else:
                     deployLevel = 0
                 progressCounter += 1
+
+                '''
+                load progressCounter into variable v
+                add v by 1
+                save back in v to progresscounter'''
+
                 row.append(deployLevel)
             writer.writerow(row)
             with open("BackwardsAirbrakeSimulation\progress.txt", 'w') as progress:
@@ -184,6 +193,14 @@ with open("BackwardsAirbrakeSimulation\LookupTable.csv", 'w') as ResultFile:
                 progress.write(f"Current Progress: {progressPercentage:.4f}%")
                 progress.write(f"\nCurrent Runtime: {currentRuntime:.4f}\nEstimated Runtime: {estimatedRuntime:.4f}")
 
+
+if __name__ == "__main__":
+    with ProcessPoolExecutor(max_worker = 6) as executor:
+        results = []
+        for i in range(0, 6, 1):
+            processCall = executor.submit()
+            results.append()
+            pass
 
 endTime = time.time()
 execution_time = endTime - startTime
