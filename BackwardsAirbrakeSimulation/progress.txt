@@ -1,3 +1,2 @@
-Current Progress: 25.8333%
-Current Runtime: 31.2668
-Estimated Runtime: 121.0326
+
+Current Runtime: 4.2642

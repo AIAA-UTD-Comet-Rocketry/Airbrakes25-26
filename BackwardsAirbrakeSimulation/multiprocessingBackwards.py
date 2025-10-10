@@ -2,12 +2,12 @@
 #from pyatmos import expo
 import matplotlib.pyplot as plt
 #import numpy as np
-#import pandas as pd
 import csv
 import math as Math
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import time
 import pandas as pd
+
 #2-Dimensional Physics
 def BestDeployLevel(angle, altitude, velocity, maxAlt, step):
     differences = []
@@ -150,26 +150,31 @@ plt.savefig('BackwardsAirbrakeSimulation\SimResults.png')
 #plt.show()
 
 startTime = time.time()
-numVel = 10
-numAlt = 10
+processors = 60
+numVel = 20
+numAlt = 20
 numAng = 6
+if (processors > numVel):
+    maxProcesses = numVel
+else:
+    maxProcesses = processors
 progressCounter = 0
 minVelocity = .5
 maxVelocity = 275
 velStep = (maxVelocity-minVelocity)/(numAng-1)
-maxAltitude = 3048
+maxAltitude = 3048        
 
-def getCSVForAngle(ang):
-    with open(f"BackwardsAirbrakeSimulation\Angle{ang}.csv", 'w') as ResultFile:
+def getCSVForVelocity(vel):
+    currentVelocity = minVelocity + velStep*vel
+    with open(f"BackwardsAirbrakeSimulation\Velocity{vel}.csv", 'w') as ResultFile:
         writer = csv.writer(ResultFile)
-        minAltitude = 0
-        with open(f"BackwardsAirbrakeSimulation\SourceFiles/Angle{ang*5}Level0%.csv",'r') as file:
-            reader = csv.reader(file)
-            minAltitude = float(next(reader)[0])
-        altStep = (maxAltitude-minAltitude)/(numAlt-1)
-        for vel in range (numVel):
-            currentVelocity = minVelocity + velStep*vel
+        for ang in range (numAng):
             row = []
+            minAltitude = 0
+            with open(f"BackwardsAirbrakeSimulation\SourceFiles/Angle{ang*5}Level0%.csv",'r') as file:
+                reader = csv.reader(file)
+                minAltitude = float(next(reader)[0])
+            altStep = (maxAltitude-minAltitude)/(numAlt-1)
             for alt in range (numAlt):
                 currentAltitude = round(maxAltitude - altStep*alt, 1)
                 if (currentAltitude == 3048):
@@ -178,44 +183,42 @@ def getCSVForAngle(ang):
                     deployLevel = BestDeployLevel(ang*5, currentAltitude, currentVelocity, maxAltitude, step)
                 else:
                     deployLevel = 0
-                # progressCounter += 1
-
-                '''
-                load progressCounter into variable v
-                add v by 1
-                save back in v to progresscounter'''
 
                 row.append(deployLevel)
             writer.writerow(row)
-            # with open("BackwardsAirbrakeSimulation\progress.txt", 'w') as progress:
-            #     progressPercentage = progressCounter*100/(numVel*numAng*numAlt)
-            #     currentTime = time.time()
-            #     currentRuntime = (currentTime - startTime)
-            #     estimatedRuntime = 100*currentRuntime/progressPercentage
-            #     progress.write(f"Current Progress: {progressPercentage:.4f}%")
-            #     progress.write(f"\nCurrent Runtime: {currentRuntime:.4f}\nEstimated Runtime: {estimatedRuntime:.4f}")
-    return ang
+            with open("BackwardsAirbrakeSimulation\progress.txt", 'w') as progress:
+                #progressCounter += numAlt
+                #progressPercentage = progressCounter*100/(numVel*numAng*numAlt)
+                currentTime = time.time()
+                currentRuntime = (currentTime - startTime)
+                #estimatedRuntime = 100*currentRuntime/progressPercentage
+                #progress.write(f"Current Progress: {progressPercentage:.4f}%")
+                progress.write(f"\nCurrent Runtime: {currentRuntime:.4f}")
+                #progress.write(f"\nEstimated Runtime: {estimatedRuntime:.4f}")
+    return vel
 
 if __name__ == "__main__":
-    with ProcessPoolExecutor(max_workers = numAng) as executor:
+    with ProcessPoolExecutor(max_workers = maxProcesses) as executor:
         results = []
-        for i in range(0, numAng, 1):
-            processCall = executor.submit(getCSVForAngle, i)
+        for i in range(0, numVel, 1):
+            processCall = executor.submit(getCSVForVelocity, i)
             results.append(processCall)
         for result in as_completed(results):
             returnedValue = result.result()
-            print(f"Angle {returnedValue}, csv file should be done")
+            print(f"Velocity {returnedValue}, csv file should be done")
 
-    endTime = time.time()
-    execution_time = endTime - startTime
     finalDf = pd.DataFrame()
-
-    print(f"Runtime: {execution_time:.4f}")
-    for i in range(0, 5, 1):
-        df = pd.read_csv(f"BackwardsAirbrakeSimulation\Angle{i}.csv", header=None)
+    for i in range(0, numVel, 1):
+        df = pd.read_csv(f"BackwardsAirbrakeSimulation\Velocity{i}.csv", header=None)
         finalDf = pd.concat([finalDf, df], ignore_index = True)
             
     finalDf.to_csv("BackwardsAirbrakeSimulation\LookupTable.csv",header=None, index=False)
+
+    endTime = time.time()
+    execution_time = endTime - startTime
+    print(f"Runtime: {execution_time:.4f}")
+
+
 '''
 # 1-Dimensional Physics
 targetAltitude = 3048 #Target altitude in m
