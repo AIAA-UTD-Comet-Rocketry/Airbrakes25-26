@@ -151,8 +151,8 @@ plt.savefig('BackwardsAirbrakeSimulation\SimResults.png')
 
 startTime = time.time()
 processors = 12
-numVel = 20
-numAlt = 20
+numVel = 50
+numAlt = 50
 numAng = 6
 if (processors > numVel):
     maxProcesses = numVel
@@ -188,15 +188,6 @@ def getCSVForVelocity(vel):
                     deployLevel = 0
                 row.append(deployLevel)
             writer.writerow(row)
-            with open("BackwardsAirbrakeSimulation\progress.txt", 'w') as progress:
-                #progressCounter += numAlt
-                #progressPercentage = progressCounter*100/(numVel*numAng*numAlt)
-                currentTime = time.time()
-                currentRuntime = (currentTime - startTime)
-                #estimatedRuntime = 100*currentRuntime/progressPercentage
-                #progress.write(f"Current Progress: {progressPercentage:.4f}%")
-                progress.write(f"\nCurrent Runtime: {currentRuntime:.4f}")
-                #progress.write(f"\nEstimated Runtime: {estimatedRuntime:.4f}")
     return vel
 
 if __name__ == "__main__":
@@ -206,6 +197,15 @@ if __name__ == "__main__":
             processCall = executor.submit(getCSVForVelocity, i)
             results.append(processCall)
         for result in as_completed(results):
+            with open("BackwardsAirbrakeSimulation\progress.txt", 'w') as progress:
+                progressCounter += 1
+                progressPercentage = progressCounter*100/(numVel)
+                currentTime = time.time()
+                currentRuntime = (currentTime - startTime)
+                estimatedRuntime = 100*currentRuntime/progressPercentage
+                progress.write(f"Current Progress: {progressPercentage:.4f}%")
+                progress.write(f"\nCurrent Runtime: {currentRuntime:.4f}")
+                progress.write(f"\nEstimated Runtime: {estimatedRuntime:.4f}")
             returnedValue = result.result()
             print(f"Velocity {returnedValue}, csv file should be done")
 
