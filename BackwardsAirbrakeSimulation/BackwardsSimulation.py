@@ -16,23 +16,23 @@ def BestDeployLevel(angle, altitude, velocity, maxAlt, step):
         vel = []
         with open(f"BackwardsAirbrakeSimulation\SourceFiles/Angle{angle}Level{level*10}%.csv", 'r') as sourceFile:
             reader = csv.reader(sourceFile)
-            currentRow = next(reader)
-            minAlt = float(currentRow[0])
-            done = False
-            while done == False and float(currentRow[0]) <= 3048:
-                alt.append(float(currentRow[0]))
-                vel.append(float(currentRow[1]))
-                currentRow = next(reader)
-                while done == False and currentRow == []:
-                    try:
-                        currentRow = next(reader)
-                    except Exception as e:
-                        done = True
-                        print(e)
-        numIndex = (maxAlt-minAlt)/step
+            for row in reader:
+                if not row or len(row) < 2:   # skip empty or malformed rows
+                    continue
+                try:
+                    altitude_val = float(row[0])
+                    velocity_val = float(row[1])
+                except ValueError:
+                    continue  # skip bad rows
+                if altitude_val > 3048:
+                    break
+                alt.append(altitude_val)
+                vel.append(velocity_val)
+        numIndex = (maxAlt-alt[0])/step
         i = 0
         j = round(numIndex, 1)
         k = int((j-i)/2)
+        #print(f"{i} {k} {j} {altitude}")
         if altitude < alt[i]:
             j = -1
         while i <= j and alt[k] != altitude:
@@ -42,16 +42,16 @@ def BestDeployLevel(angle, altitude, velocity, maxAlt, step):
             else:
                 j = k - 1
             k = i + int((j-i)/2)
-            #print (f"{alt[i]} {alt[k]} {alt[j]} {altitude}")
+            #print(f"{alt[i]} {alt[k]} {alt[j]} {altitude}")
         if i > j:
             differences.append(1000)
         else:
             differences.append(abs(vel[k] - velocity))
-    print(differences)
+    #print(differences)
     
     closest = min(differences)
     index = differences.index(closest)
-    print(f"Best deployment level at altitude: {altitude} and velocity: {velocity} is {index*10}%")
+    #print(f"Best deployment level at altitude: {altitude} and velocity: {velocity} is {index*10}%")
     return index*10
 
 targetAltitude = 3048 #Target altitude in m
@@ -95,7 +95,7 @@ for i in range (6):
         velocities.append(0) #initial starting conditions
         angles.append(65)
         altitudes.append(3048)
-        print(f"Given target altitude of: {targetAltitude} and a deployment level of {brakeLevel*100}% at angle of {angle}")
+        #print(f"Given target altitude of: {targetAltitude} and a deployment level of {brakeLevel*100}% at angle of {angle}")
 
         while speed <= maxSpeed:
             T = T0-(L*altitude)
@@ -117,7 +117,7 @@ for i in range (6):
         l = i%3
         (line,) = ax[k, l].plot(velocities, altitudes, label=f"{int(brakeLevel*100)}%")
         lines.append(line)
-        print(f"the rocket will need to begin deployment at {altitude}m at speed {speed}\n")
+        #print(f"the rocket will need to begin deployment at {altitude}m at speed {speed}\n")
 
         """leg = ax[k, l].legend(loc="upper right")
         for legline, origline in zip(leg.get_lines(), lines):
@@ -150,7 +150,7 @@ plt.savefig('BackwardsAirbrakeSimulation\SimResults.png')
 #plt.show()
 
 startTime = time.time()
-processors = 60
+processors = 12
 numVel = 20
 numAlt = 20
 numAng = 6
@@ -165,10 +165,12 @@ velStep = (maxVelocity-minVelocity)/(numAng-1)
 maxAltitude = 3048        
 
 def getCSVForVelocity(vel):
+    print(f"In Velocity {vel}")
     currentVelocity = minVelocity + velStep*vel
     with open(f"BackwardsAirbrakeSimulation\SourceFiles/Velocity{vel}.csv", 'w') as ResultFile:
         writer = csv.writer(ResultFile)
         for ang in range (numAng):
+            #print(f"In Angle {ang}")
             row = []
             minAltitude = 0
             with open(f"BackwardsAirbrakeSimulation\SourceFiles/Angle{ang*5}Level0%.csv",'r') as file:
@@ -176,6 +178,7 @@ def getCSVForVelocity(vel):
                 minAltitude = float(next(reader)[0])
             altStep = (maxAltitude-minAltitude)/(numAlt-1)
             for alt in range (numAlt):
+                #print(f"In Altitude {alt}")
                 currentAltitude = round(maxAltitude - altStep*alt, 1)
                 if (currentAltitude == 3048):
                     deployLevel = 100
@@ -183,7 +186,6 @@ def getCSVForVelocity(vel):
                     deployLevel = BestDeployLevel(ang*5, currentAltitude, currentVelocity, maxAltitude, step)
                 else:
                     deployLevel = 0
-
                 row.append(deployLevel)
             writer.writerow(row)
             with open("BackwardsAirbrakeSimulation\progress.txt", 'w') as progress:
@@ -206,6 +208,16 @@ if __name__ == "__main__":
         for result in as_completed(results):
             returnedValue = result.result()
             print(f"Velocity {returnedValue}, csv file should be done")
+
+    """if leftOver > 0:
+        with ProcessPoolExecutor(max_workers = leftOver) as executor:
+            results = []
+            for i in range(maxProcesses, numVel, 1):
+                processCall = executor.submit(getCSVForVelocity, i)
+                results.append(processCall)
+            for result in as_completed(results):
+                returnedValue = result.result()
+                print(f"Velocity {returnedValue}, csv file should be done")"""
 
     finalDf = pd.DataFrame()
     for i in range(0, numVel, 1):
