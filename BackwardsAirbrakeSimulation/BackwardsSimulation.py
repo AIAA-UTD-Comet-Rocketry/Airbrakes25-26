@@ -8,7 +8,7 @@ from concurrent.futures import ProcessPoolExecutor, as_completed
 import time
 import pandas as pd
 
-def getCSVForVelocity(vel, minVelocity, velStep, numAng, numAlt, maxAltitude, step):
+def getCSVForVelocity(vel, minVelocity, velStep, numAng, numAlt, minAltitude, maxAltitude, step):
     print(f"In Velocity {vel}")
     currentVelocity = minVelocity + velStep*vel
     with open(f"BackwardsAirbrakeSimulation\SourceFiles/Velocity{vel}.csv", 'w') as ResultFile:
@@ -16,16 +16,16 @@ def getCSVForVelocity(vel, minVelocity, velStep, numAng, numAlt, maxAltitude, st
         for ang in range (numAng):
             #print(f"In Angle {ang}")
             row = []
-            minAltitude = 0
+            """minAltitude = 0
             with open(f"BackwardsAirbrakeSimulation\SourceFiles/Angle{ang*5}Level0%.csv",'r') as file:
                 reader = csv.reader(file)
-                minAltitude = float(next(reader)[0])
+                minAltitude = float(next(reader)[0])"""
             altStep = (maxAltitude-minAltitude)/(numAlt-1)
             for alt in range (numAlt):
                 #print(f"In Altitude {alt}")
                 currentAltitude = round(maxAltitude - altStep*alt, 1)
                 if (currentAltitude == 3048):
-                    deployLevel = 100
+                    deployLevel = 127
                 elif (currentAltitude >= minAltitude):
                     deployLevel = BestDeployLevel(ang*5, currentAltitude, currentVelocity, maxAltitude, step)
                 else:
@@ -54,6 +54,9 @@ if __name__ == "__main__":
     p0 = [x, y] #Tuple representing positional vector of the rocket
     initialSpeed = .5 #Speed of rocket at target apogee in m/s (non-zero due to calculation issues)
     v0 = [initialSpeed*Math.cos(Math.radians(angle)), initialSpeed*Math.sin(Math.radians(angle))] #Velocity vector of the rocket at apogee
+    with open(f"BackwardsAirbrakeSimulation\SourceFiles/Angle0Level0%.csv",'r') as file:
+        reader = csv.reader(file)
+        minAltitude = float(next(reader)[0])
 
     fig, ax = plt.subplots(2, 3, figsize=(12, 8))
     lines = []
@@ -131,8 +134,8 @@ if __name__ == "__main__":
     plt.savefig('BackwardsAirbrakeSimulation\SimResults.png')
     #plt.show()
 
-    ask = True #Turn this off at your own risk, you have been warned
-    processors = 60
+    ask = False #Turn this off at your own risk, you have been warned
+    processors = 8
     revalue = 'h'
     if ask == True:
         while revalue == 'h':
@@ -142,8 +145,8 @@ if __name__ == "__main__":
             elif revalue == 'h':
                 print("\n-----------------------------------------------------------------------------------------------------------------------------------\nYou can check how many processes your computer can run at one time by going to your task manager and selecting the performance tab.\nThe number will be listed as logical processors.\nIf you cannot see this, right click on the graph and selet change graph to -> logical processors.\n-----------------------------------------------------------------------------------------------------------------------------------")
 
-    numVel = 500
-    numAlt = 500
+    numVel = 20
+    numAlt = 20
     numAng = 6
     startTime = time.time()
     if (processors > numVel):
@@ -165,6 +168,7 @@ if __name__ == "__main__":
                 velStep,
                 numAng,
                 numAlt,
+                minAltitude,
                 maxAltitude,
                 step
             )
@@ -247,7 +251,7 @@ def BestDeployLevel(angle, altitude, velocity, maxAlt, step):
     closest = min(differences)
     index = differences.index(closest)
     #print(f"Best deployment level at altitude: {altitude} and velocity: {velocity} is {index*10}%")
-    return index*10
+    return int(index*10*127/100)
 
 
 '''
