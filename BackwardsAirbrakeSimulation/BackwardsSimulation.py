@@ -131,8 +131,8 @@ if __name__ == "__main__":
     plt.savefig('BackwardsAirbrakeSimulation\SimResults.png')
     #plt.show()
 
-    ask = False #Turn this off at your own risk, you have been warned
-    processors = 8
+    ask = True #Turn this off at your own risk, you have been warned
+    processors = 60
     revalue = 'h'
     if ask == True:
         while revalue == 'h':
@@ -145,8 +145,8 @@ if __name__ == "__main__":
     with open(f"BackwardsAirbrakeSimulation\SourceFiles/Angle0Level0%.csv",'r') as file:
         reader = csv.reader(file)
         minAltitude = float(next(reader)[0])
-    numVel = 50
-    numAlt = 50
+    numVel = 500
+    numAlt = 500
     numAng = 6
     startTime = time.time()
     if (processors > numVel):
@@ -251,8 +251,6 @@ def BestDeployLevel(angle, altitude, velocity, maxAlt, step):
     closest = min(differences)
     index = differences.index(closest)
     #print(f"Best deployment level at altitude: {altitude} and velocity: {velocity} is {index*10}%")
-    if (angle == 0):
-        print(f"For angle {angle}, and altitude {altitude}, at velocity {velocity}, the deployment altitude is: {index*10}")
     return int(index*10*127/100)
 
 
