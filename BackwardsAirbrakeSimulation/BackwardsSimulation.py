@@ -54,9 +54,6 @@ if __name__ == "__main__":
     p0 = [x, y] #Tuple representing positional vector of the rocket
     initialSpeed = .5 #Speed of rocket at target apogee in m/s (non-zero due to calculation issues)
     v0 = [initialSpeed*Math.cos(Math.radians(angle)), initialSpeed*Math.sin(Math.radians(angle))] #Velocity vector of the rocket at apogee
-    with open(f"BackwardsAirbrakeSimulation\SourceFiles/Angle0Level0%.csv",'r') as file:
-        reader = csv.reader(file)
-        minAltitude = float(next(reader)[0])
 
     fig, ax = plt.subplots(2, 3, figsize=(12, 8))
     lines = []
@@ -144,9 +141,12 @@ if __name__ == "__main__":
                 processors = int(input("\nPlease input the number of processes you wish to use: "))
             elif revalue == 'h':
                 print("\n-----------------------------------------------------------------------------------------------------------------------------------\nYou can check how many processes your computer can run at one time by going to your task manager and selecting the performance tab.\nThe number will be listed as logical processors.\nIf you cannot see this, right click on the graph and selet change graph to -> logical processors.\n-----------------------------------------------------------------------------------------------------------------------------------")
-
-    numVel = 20
-    numAlt = 20
+    
+    with open(f"BackwardsAirbrakeSimulation\SourceFiles/Angle0Level0%.csv",'r') as file:
+        reader = csv.reader(file)
+        minAltitude = float(next(reader)[0])
+    numVel = 50
+    numAlt = 50
     numAng = 6
     startTime = time.time()
     if (processors > numVel):
@@ -156,7 +156,7 @@ if __name__ == "__main__":
     progressCounter = 0
     minVelocity = .5
     maxVelocity = 275
-    velStep = (maxVelocity-minVelocity)/(numAng-1)
+    velStep = (maxVelocity-minVelocity)/(numVel)
     maxAltitude = 3048        
     with ProcessPoolExecutor(max_workers = maxProcesses) as executor:
         results = []
@@ -251,6 +251,8 @@ def BestDeployLevel(angle, altitude, velocity, maxAlt, step):
     closest = min(differences)
     index = differences.index(closest)
     #print(f"Best deployment level at altitude: {altitude} and velocity: {velocity} is {index*10}%")
+    if (angle == 0):
+        print(f"For angle {angle}, and altitude {altitude}, at velocity {velocity}, the deployment altitude is: {index*10}")
     return int(index*10*127/100)
 
 
