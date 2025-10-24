@@ -45,7 +45,7 @@ if __name__ == "__main__":
     T0 = 300 #Temp at sea level
     P0 = 101325 #Air pressure at sea level
     M = 0.0289644 #Molar mass of air
-    L = .0098 #Lapse rateg = 9.81 #Acceleration of gravity
+    L = .0098 #Lapse rate g = 9.81 #Acceleration of gravity
     g = 9.81 #Acceleration of gravity
     m = 27.5 #Rocket's mass in kg
     CdABody = .5376 #Drag*Area of rocket body
@@ -145,8 +145,8 @@ if __name__ == "__main__":
     with open(f"BackwardsAirbrakeSimulation\SourceFiles/Angle0Level0%.csv",'r') as file:
         reader = csv.reader(file)
         minAltitude = float(next(reader)[0])
-    numVel = 500
-    numAlt = 500
+    numVel = 1000
+    numAlt = 1000
     numAng = 6
     startTime = time.time()
     if (processors > numVel):
@@ -203,6 +203,23 @@ if __name__ == "__main__":
         finalDf = pd.concat([finalDf, df], ignore_index = True)
             
     finalDf.to_csv("BackwardsAirbrakeSimulation\LookupTable.csv",header=None, index=False)
+
+    table = pd.read_csv("BackwardsAirbrakeSimulation\LookupTable.csv", header=None)
+
+    newTable = pd.DataFrame()
+
+    startingIndex = 0
+
+    numRows = table.shape[0]
+    print("NUm rows: " + str(numRows))
+
+    for angle in range (0, numAng, 1):
+        for rowIndex in range(angle, numRows, numAng):
+            row = table.iloc[[rowIndex]]
+            print(row)
+            newTable = pd.concat([newTable, row], ignore_index=True)
+
+    newTable.to_csv("BackwardsAirbrakeSimulation\FinalLookupTable.csv", header=None, index=False)
 
     endTime = time.time()
     execution_time = endTime - startTime
