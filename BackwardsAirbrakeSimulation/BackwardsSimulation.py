@@ -48,7 +48,7 @@ if __name__ == "__main__":
     L = .0098 #Lapse rate g = 9.81 #Acceleration of gravity
     g = 9.81 #Acceleration of gravity
     m = 27.5 #Rocket's mass in kg
-    CdABody = .5376 #Drag*Area of rocket body
+    CdABody = .5376 #.5376 #Drag*Area of rocket body
     x = 0 #Horizontal position of the rocket
     y = targetAltitude #Vertical position of the rocket
     p0 = [x, y] #Tuple representing positional vector of the rocket
@@ -58,72 +58,83 @@ if __name__ == "__main__":
     fig, ax = plt.subplots(2, 3, figsize=(12, 8))
     lines = []
     plt.suptitle(f"Rocket Paths Given Varying Airbrake Deployment Levels")
+    
+    with open("BackwardsAirbrakeSimulation\SourceFiles/air_brake_drag_full.csv", 'r') as dragFile:
+        reader = csv.reader(dragFile)
+        for i in range (6):
+            angle = 90 - i*5
+            # add multiprocessing here <--
+            for j in range (11):
+                altitude = targetAltitude #Changing altitude
+                velocity = [initialSpeed*Math.cos(Math.radians(angle)), initialSpeed*Math.sin(Math.radians(angle))] #Set initial velocity
+                speed = initialSpeed
+                position = p0
+                brakeLevel = j/10.0 #Brake level as decimal for computing
+                CdABrakes = CdABody*.5*brakeLevel #Drag*Area of airbrakes
+                CdATotal = CdABody + CdABrakes #Total drag of the rocket
+                counter = 0 #Keeps track of the number of steps
+                angles = []
+                velocities = [] #Holds the velocity information at each step for plotting
+                altitudes = [] #Holds the altitude information at each step for plotting
+                velocities.append(0) #initial starting conditions
+                angles.append(65)
+                altitudes.append(3048)
+                #print(f"Given target altitude of: {targetAltitude} and a deployment level of {brakeLevel*100}% at angle of {angle}")
 
-    for i in range (6):
-        angle = 90 - i*5
-        # add multiprocessing here <--
-        for j in range (11):
-            altitude = targetAltitude #Changing altitude
-            velocity = [initialSpeed*Math.cos(Math.radians(angle)), initialSpeed*Math.sin(Math.radians(angle))] #Set initial velocity
-            speed = initialSpeed
-            position = p0
-            brakeLevel = j/10.0 #Brake level as decimal for computing
-            CdABrakes = CdABody*.5*brakeLevel #Drag*Area of airbrakes
-            CdATotal = CdABody + CdABrakes #Total drag of the rocket
-            counter = 0 #Keeps track of the number of steps
-            angles = []
-            velocities = [] #Holds the velocity information at each step for plotting
-            altitudes = [] #Holds the altitude information at each step for plotting
-            velocities.append(0) #initial starting conditions
-            angles.append(65)
-            altitudes.append(3048)
-            #print(f"Given target altitude of: {targetAltitude} and a deployment level of {brakeLevel*100}% at angle of {angle}")
+                while speed <= maxSpeed:
+                    T = T0-(L*altitude)
+                    P = P0*Math.exp(-1*M*g*altitude/(Ru*T))
+                    rho = P/(R*T)
+                    machList = [.3, .49, .68, .87, 1.06, 1.24, 1.43, 1.62, 1.81, 2]
+                    q = 0
+                    CdATotal = CdABody
+                    while speed*.00292 > machList[q]:
+                        q += 1
+                        CdABrakes = float(next(reader)[2])
+                    CdATotal = CdABody + CdABrakes
+                    print(f"Drag is {CdATotal}")
+                    dragFile.seek(0)
+                    dvxdh = abs(-(-(.5*(1.0/m))*(rho)*speed*speed*CdATotal)/speed*Math.sin(Math.radians(angle))) #Change in velocity over altitude
+                    dvydh = abs(-(-1*g-(.5*(1.0/m))*(rho)*speed*speed*CdATotal)/speed*Math.cos(Math.radians(angle))) #Change in velocity over altitude
+                    velocity[0] = velocity[0] + dvxdh*step
+                    velocity[1] = velocity[1] + dvydh*step
+                    speed = Math.sqrt(Math.pow(velocity[0], 2) + Math.pow(velocity[1], 2))
+                    altitude = round(altitude - step, 1)
+                    counter += 1
+                    velocities.insert(0, speed) #Holds data for plotting 
+                    angles.insert(0, angle)
+                    altitudes.insert(0, altitude)
+                    #print(f"The change in velocity is: {dvydh*step}, the new velocity is {speed}m")
 
-            while speed <= maxSpeed:
-                T = T0-(L*altitude)
-                P = P0*Math.exp(-1*M*g*altitude/(Ru*T))
-                rho = P/(R*T)
-                dvxdh = abs(-(-(.5*(1.0/m))*(rho)*speed*speed*CdATotal)/speed*Math.sin(Math.radians(angle))) #Change in velocity over altitude
-                dvydh = abs(-(-1*g-(.5*(1.0/m))*(rho)*speed*speed*CdATotal)/speed*Math.cos(Math.radians(angle))) #Change in velocity over altitude
-                velocity[0] = velocity[0] + dvxdh*step
-                velocity[1] = velocity[1] + dvydh*step
-                speed = Math.sqrt(Math.pow(velocity[0], 2) + Math.pow(velocity[1], 2))
-                altitude = round(altitude - step, 1)
-                counter += 1
-                velocities.insert(0, speed) #Holds data for plotting 
-                angles.insert(0, angle)
-                altitudes.insert(0, altitude)
-                #print(f"The change in velocity is: {dvydh*step}, the new velocity is {speed}m")
+                k = int(i/3)
+                l = i%3
+                (line,) = ax[k, l].plot(velocities, altitudes, label=f"{int(brakeLevel*100)}%")
+                lines.append(line)
+                #print(f"the rocket will need to begin deployment at {altitude}m at speed {speed}\n")
 
-            k = int(i/3)
-            l = i%3
-            (line,) = ax[k, l].plot(velocities, altitudes, label=f"{int(brakeLevel*100)}%")
-            lines.append(line)
-            #print(f"the rocket will need to begin deployment at {altitude}m at speed {speed}\n")
+                """leg = ax[k, l].legend(loc="upper right")
+                for legline, origline in zip(leg.get_lines(), lines):
+                    legline.set_picker(True)  # make legend entries clickable
 
-            """leg = ax[k, l].legend(loc="upper right")
-            for legline, origline in zip(leg.get_lines(), lines):
-                legline.set_picker(True)  # make legend entries clickable
+                def on_pick(event):
+                    legline = event.artist
+                    index = leg.get_lines().index(legline)
+                    origline = lines[index]
+                    visible = not origline.get_visible()
+                    origline.set_visible(visible)
+                    legline.set_alpha(1.0 if visible else 0.2)  # dim legend if hidden
+                    fig.canvas.draw()
 
-            def on_pick(event):
-                legline = event.artist
-                index = leg.get_lines().index(legline)
-                origline = lines[index]
-                visible = not origline.get_visible()
-                origline.set_visible(visible)
-                legline.set_alpha(1.0 if visible else 0.2)  # dim legend if hidden
-                fig.canvas.draw()
+                fig.canvas.mpl_connect("pick_event", on_pick)"""
 
-            fig.canvas.mpl_connect("pick_event", on_pick)"""
+                ax[k,l].set_title(f"Angle: {90 - angle}% from vertical")
+                ax[k,l].set_xlabel("Velocity [m/s]")
+                ax[k,l].set_ylabel("Altitude [m]")
 
-            ax[k,l].set_title(f"Angle: {90 - angle}% from vertical")
-            ax[k,l].set_xlabel("Velocity [m/s]")
-            ax[k,l].set_ylabel("Altitude [m]")
-
-            with open(f"BackwardsAirbrakeSimulation\SourceFiles\Angle{90 - angle}Level{j*10}%.csv", 'w') as file:
-                writer = csv.writer(file)
-                for v, a in zip(altitudes, velocities):
-                    writer.writerow([v, a])
+                with open(f"BackwardsAirbrakeSimulation\SourceFiles\Angle{90 - angle}Level{j*10}%.csv", 'w') as file:
+                    writer = csv.writer(file)
+                    for v, a in zip(altitudes, velocities):
+                        writer.writerow([v, a])
 
     # START FROM HERE
             
